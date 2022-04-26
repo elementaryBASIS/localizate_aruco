@@ -26,6 +26,7 @@ class definedMarker(marker):
         self.__dict__ = marker.__dict__.copy()
         self.rvec = rvec[0]
         self.tvec = tvec[0]
+        self.dst = np.linalg.norm(self.tvec, 2)
 
     def __str__(self):
         return "ID: %x Pose: %s  Ang: %s(deg)" % (self.id, str(self.tvec[0]), str(np.rad2deg(self.rvec[0])))
@@ -52,7 +53,12 @@ class staticMarkers:
     def frame_cb(self, data):
         # skip frame if it's corrupted
         try:
-            frame = CvBridge().imgmsg_to_cv2(data, "bgr8").copy()
+            frame = CvBridge().imgmsg_to_cv2(data, "bgr8")
+            if frame is None:
+                rospy.logwarn('Frame is "None"')
+                return
+            else:
+                frame = frame.copy()
         except CvBridgeError as e:
             rospy.logwarn("Corrupted frame")
         else:
@@ -75,7 +81,7 @@ class staticMarkers:
                     rvec, tvec, _ = aruco.estimatePoseSingleMarkers(static_markers[i].corners, self.marker_size, self.camera_mtx, self.camera_dst)
                     static_markers[i] = definedMarker(static_markers[i], rvec, tvec)
 
-
+                self.global_system(static_markers)
                 if self.useGUI:
                     font = cv2.FONT_HERSHEY_PLAIN
                     for i in static_markers:
@@ -89,7 +95,25 @@ class staticMarkers:
                     resized = cv2.resize(frame, (1280, 960), interpolation=cv2.INTER_AREA)
                     cv2.imshow("Detected markers", resized)
                     cv2.waitKey(1)
-        
+
+    '''
+    m1  m2
+    #   #
+    
+    #
+    m3
+    '''
+    def global_system(self, markers):
+        # define cubes on field
+        if len(markers) != 3:
+            rospy.logwarn("Non-compliance with the required number of markers")
+            return
+        sort = sorted(markers, key=lambda m: m.dst)
+        m1 = min(sort[:2], key=lambda m: m.tvec[0])
+        m2 = max(sort[:2], key=lambda m: m.tvec[0])
+        m3 = sort[3]
+        print(m1.id, m2.id, m3.id)
+
 if __name__ == "__main__":
     rospy.init_node('elements_detector', anonymous=True)
     configFile = rospy.get_param('localizer/camera_params')
