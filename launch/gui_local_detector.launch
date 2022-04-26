@@ -1,0 +1,15 @@
+<launch>
+    <param name='localizer/camera_params' value='$(find localizate_aruco)/config/c270.yaml' />
+    <param name='localizer/GUI_enable' value='True' />
+    <node name="camera"
+            pkg="image_publisher"
+            type="image_publisher"
+            args="2"
+            output="screen">
+    </node>
+    <node name="localizer"
+          pkg="localizate_aruco"
+          type="staticMarkers.py" 
+          output="screen">
+    </node>
+</launch>
