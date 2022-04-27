@@ -52,6 +52,7 @@ class staticMarkers:
         assert (
             not self.camera_mtx is None or not self.camera_dst is None), "%s not found!" % calibFileName
         self.detector_params = aruco.DetectorParameters_create()
+        self.camera_pos = None
 
     def prepare_image(self, frame):
         new_frame = frame
@@ -92,9 +93,13 @@ class staticMarkers:
                     rvec, tvec, _ = aruco.estimatePoseSingleMarkers(robots_markers[i].corners, self.marker_size, self.camera_mtx, self.camera_dst)
                     robots_markers[i] = definedMarker(robots_markers[i], rvec, tvec)
                 self.camera_pos, static_rvec, static_tvec = self.camera_position(static_markers)
-
-                
-                #self.locate_robot(robots_markers)
+                #print(np.rad2deg(static_rvec))
+                robots = []
+                for robot in robots_markers:
+                    robot_pos = self.locate_robot(robot)
+                    if not robot_pos is None:
+                        robots.append((robot, robot_pos))
+                print(robots)
                 if self.useGUI:
                     font = cv2.FONT_HERSHEY_PLAIN
                     for i in static_markers:
@@ -144,7 +149,8 @@ class staticMarkers:
             tvec = tvec[1]
         rotM = cv2.Rodrigues(rvec)[0]
         camPos = -np.matrix(rotM).T * np.matrix(tvec)
-        return camPos.A1, rvec, tvec
+        camPos = camPos.A1
+        return camPos, rvec, tvec
 
     def old_camera_position(self, markers):
         # define cubes on field
@@ -179,15 +185,18 @@ class staticMarkers:
         #print("==========================")
         return pos, rot
     
-    def locate_robot(self, markers):
-        if len(markers) == 0:
-            rospy.logwarn("Can't see any robots")
+    def locate_robot(self, marker):
+        if self.camera_pos is None:
+            rospy.logwarn("Camera position not defined, calibrate camera")
             return
-        r1 = markers[0]
-        x = r1.tvec[0][0] * cos(np.pi / 2 - self.camera[1][2]) + self.camera[0][0]
-        y = r1.tvec[0][1] * cos(np.pi / 2 - self.camera[1][1]) + self.camera[0][1]
-        z = r1.tvec[0][2] * cos(np.pi / 2 - self.camera[1][0]) + self.camera[0][2]
-        print(x, y, z)
+        #print(r1.rvec, r1.tvec)
+        rvec = np.array([marker.rvec])
+        tvec = np.array([marker.tvec])
+        rotM = -np.matrix(cv2.Rodrigues(rvec)[0]).T
+        r1_pos = np.matrix(tvec) * rotM
+        r1_pos = r1_pos.A1 - self.camera_pos
+        return r1_pos
+
 if __name__ == "__main__":
     rospy.init_node('elements_detector', anonymous=True)
     configFile = rospy.get_param('localizer/camera_params')
