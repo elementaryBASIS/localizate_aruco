@@ -33,14 +33,14 @@ class definedMarker(marker):
         return "ID: %x Pose: %s  Ang: %s(deg)" % (self.id, str(self.tvec[0]), str(np.rad2deg(self.rvec[0])))
 
 class staticMarkers:
-    marker_size = 0.0992 # [meters]
+    marker_size = 0.1 # [meters]
     aruco_dict = aruco.getPredefinedDictionary(aruco.DICT_4X4_100)
-    static_markers_sked = [10, 13, 12]
-    robots_markers_sked = [11]
+    static_markers_sked = [10, 11, 12]
+    robots_markers_sked = [14]
     static_poses = (
-        (0.31 + marker_size / 2, 0.09 + marker_size / 2, 0),
-        (marker_size / 2, marker_size / 2, 0),
-        (marker_size / 2, 0.285 + marker_size / 2, 0)
+        (0.812 + marker_size / 2, 0.027 + marker_size / 2, 0.0),
+        (0.038 + marker_size / 2, 0.284 + marker_size / 2, 0.0),
+        (0.637 + marker_size / 2, 0.405 + marker_size / 2, 0.0)
     )
 
     def __init__(self, calibFileName="calibration_settings.yaml", debug=False, useGUI=False):
@@ -56,6 +56,7 @@ class staticMarkers:
 
     def prepare_image(self, frame):
         new_frame = frame
+        print(frame.shape)
         return new_frame
 
     def frame_cb(self, data):
@@ -92,7 +93,7 @@ class staticMarkers:
                 for i in range(len(robots_markers)):
                     rvec, tvec, _ = aruco.estimatePoseSingleMarkers(robots_markers[i].corners, self.marker_size, self.camera_mtx, self.camera_dst)
                     robots_markers[i] = definedMarker(robots_markers[i], rvec, tvec)
-                self.camera_pos, static_rvec, static_tvec = self.camera_position(static_markers)
+                self.camera_pos, self.static_rvec, self.static_tvec = self.camera_position(static_markers)
                 #print(np.rad2deg(static_rvec))
                 robots = []
                 for robot in robots_markers:
@@ -108,11 +109,12 @@ class staticMarkers:
                         aruco.drawDetectedMarkers(frame, [i.corners])
                     #if len(static_markers):
                     #    aruco.drawAxis(frame, self.camera_mtx, self.camera_dst, np.array(tuple(m.rvec for m in static_markers)), np.array(tuple(m.tvec for m in static_markers)), 0.03)
-                    if not static_rvec is None and not static_tvec is None:
-                        aruco.drawAxis(frame, self.camera_mtx, self.camera_dst, static_rvec, static_tvec, 0.4)
+                    if not self.static_rvec is None and not self.static_tvec is None:
+                        aruco.drawAxis(frame, self.camera_mtx, self.camera_dst, self.static_rvec, self.static_tvec, 1)
                     for i, m in enumerate(static_markers):
                         cv2.putText(frame, str(m.id_field), m.center, font, 1, (0, 255, 0), 2, cv2.LINE_AA)
-                    cv2.putText(frame, str(self.camera_pos), (5, 30), font, 1.5, (0, 255, 0), 2, cv2.LINE_AA)
+                    cv2.putText(frame, "Cam: " + str(self.camera_pos), (5, 400), font, 1.5, (0, 255, 0), 2, cv2.LINE_AA)
+                    cv2.putText(frame, "Robot: " + str(robots[0][1]), (5, 430), font, 1.5, (0, 255, 0), 2, cv2.LINE_AA)
                     
                     resized = cv2.resize(frame, (1280, 960), interpolation=cv2.INTER_AREA)
                     cv2.imshow("Detected markers", resized)
@@ -152,50 +154,30 @@ class staticMarkers:
         camPos = camPos.A1
         return camPos, rvec, tvec
 
-    def old_camera_position(self, markers):
-        # define cubes on field
-        if len(markers) < 3:
-            rospy.logwarn("Non-compliance with the required number of markers")
+    def locate_robot(self, marker):
+        if self.camera_pos is None:
+            rospy.logwarn("Camera position not defined, calibrate camera")
             return
-        sort = sorted(markers, key=lambda m: m.dst, reverse=True)
-        m1 = min(sort[:2], key=lambda m: m.tvec[0][0])
-        #m1 = sort[0]
-        #m2 = sort[1]
-        m2 = max(sort[:2], key=lambda m: m.tvec[0][0])
-        m3 = sort[2]
-        m1.id_field = 1
-        m2.id_field = 2
-        m3.id_field = 3
-        static_alpha = atan2(self.static_poses[2][2] - self.static_poses[1][2], self.static_poses[2][1] - self.static_poses[1][1])
-        alpha = asin((m2.tvec[0][1] - m3.tvec[0][1]) / (self.static_poses[2][1] -self.static_poses[1][1])) - static_alpha
-        cam_y = m2.tvec[0][2] * cos(alpha)
-        cam_z = -cam_y * tan(alpha)
-        static_beta = atan2(self.static_poses[1][1] - self.static_poses[0][1], self.static_poses[0][0] - self.static_poses[1][0])
-        #print(degrees(static_beta))
-        beta = pi / 2 + (atan2(m1.tvec[0][0] - m2.tvec[0][0], m2.tvec[0][2] - m1.tvec[0][2]) + static_beta)
-        cam_x = cam_y * tan(beta)
-        #print(degrees(beta))
-        #print(m1.tvec[0][2] - m2.tvec[0][2])
-        gama = 0
-        
-        pos = np.add((cam_x, cam_y, cam_z), self.static_poses[1])
-        rot = np.asarray((alpha, beta, gama))
-        #print("Cam pos: ", str(pos))
-        #print("Cam rot: ", list(np.rad2deg(rot)))
-        #print("==========================")
-        return pos, rot
-    
+        tvec = np.array(marker.tvec.T - self.static_tvec)
+        rotM = cv2.Rodrigues(self.static_rvec)[0]
+        r1_pos = -np.matrix(rotM).T * np.matrix(tvec)
+        r1_pos = -r1_pos.A1
+        return r1_pos
+    '''
     def locate_robot(self, marker):
         if self.camera_pos is None:
             rospy.logwarn("Camera position not defined, calibrate camera")
             return
         #print(r1.rvec, r1.tvec)
-        rvec = np.array([marker.rvec])
-        tvec = np.array([marker.tvec])
+        rvec = np.array([marker.rvec] - self.static_rvec.T)
+        tvec = np.array([marker.tvec] - self.static_tvec.T)
+        print(np.array([marker.tvec]) )
+        print(self.static_tvec.T)
         rotM = -np.matrix(cv2.Rodrigues(rvec)[0]).T
         r1_pos = np.matrix(tvec) * rotM
-        r1_pos = r1_pos.A1 - self.camera_pos
+        r1_pos = r1_pos.A1
         return r1_pos
+    '''
 
 if __name__ == "__main__":
     rospy.init_node('elements_detector', anonymous=True)
