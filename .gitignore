@@ -1,0 +1,7 @@
+__pychache__
+~*
+*~
+*.pyc
+.DS_Store
+.vscode/
+*.yaml
