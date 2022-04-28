@@ -1,6 +1,10 @@
 #!/usr/bin/env python
 
+<<<<<<< HEAD
 import cv2 as cv
+=======
+import cv2
+>>>>>>> 1d80a791a3865431e88396f9ca970d23401cda74
 from cv2 import aruco
 import numpy as np
 from math import *
@@ -9,8 +13,13 @@ from time import time
 import entities
 import numpy as np
 
+<<<<<<< HEAD
 class StabilizeCam:
     measurements_count = 1 # count of frames for calibration
+=======
+class stabilizeCam:
+    measurements_count = 100
+>>>>>>> 1d80a791a3865431e88396f9ca970d23401cda74
     static_markers_sked = [10, 11, 12] # list of static marker ids
     smarker_size = 0.1 # size of static marker [meters]
     static_poses = (
@@ -18,6 +27,7 @@ class StabilizeCam:
         (0.038 + smarker_size / 2, 0.284 + smarker_size / 2, 0.0),
         (0.637 + smarker_size / 2, 0.405 + smarker_size / 2, 0.0)
     )
+<<<<<<< HEAD
     field_size = (0.8, 0.6) #size of battlefield [meters]
     def __init__(self, mtx, dst, filename):
         self.camera_mtx = mtx
@@ -47,11 +57,28 @@ class StabilizeCam:
         if len(static_markers) < 3:
             rospy.logwarn_throttle_identical(1, "Non-compliance with the required number of static markers")
             return self.isCalibrated, []
+=======
+    def __init__(self, mtx, dst, filename="calib.yaml"):
+        self.camera_mtx = mtx
+        self.camera_dst = dst
+        self.save_file = filename
+    
+    def camera_position(self, markers):
+        static_markers = list(filter(lambda x: x.id in self.static_markers_sked, markers))
+        for i in range(len(static_markers)):
+            rvec, tvec, _ = aruco.estimatePoseSingleMarkers(static_markers[i].corners, self.smarker_size, self.camera_mtx, self.camera_dst)
+            static_markers[i] = entities.definedMarker(static_markers[i], rvec, tvec)
+        # define cubes on field
+        if len(static_markers) < 3:
+            rospy.logwarn("Non-compliance with the required number of markers")
+            return
+>>>>>>> 1d80a791a3865431e88396f9ca970d23401cda74
             
         sort = sorted(static_markers, key=lambda m: m.dst, reverse=True)
         m1 = min(sort[:2], key=lambda m: m.tvec[0][0])
         m2 = max(sort[:2], key=lambda m: m.tvec[0][0])
         m3 = sort[2]
+<<<<<<< HEAD
         m1.name = "Static_1"
         m2.name = "Static_2"
         m3.name = "Static_3"
@@ -80,12 +107,22 @@ class StabilizeCam:
         rospy.loginfo("Std:\n" + str(std))
 
         _, rvec, tvec = cv.solveP3P(np.array(self.static_poses, dtype="float32"), image_points, self.camera_mtx, self.camera_dst, flags=cv.SOLVEPNP_AP3P )
+=======
+        m1.name = "1"
+        m2.name = "2"
+        m3.name = "3"
+        imgPoints = np.array((m1.center, m2.center, m3.center))
+        image_points = imgPoints.astype('float32')
+
+        _, rvec, tvec = cv2.solveP3P(np.array(self.static_poses, dtype="float32"), image_points, self.camera_mtx, self.camera_dst, flags=cv2.SOLVEPNP_AP3P )
+>>>>>>> 1d80a791a3865431e88396f9ca970d23401cda74
         if tvec[0][2] > tvec[1][2]:
             rvec = rvec[0]
             tvec = tvec[0]
         else:
             rvec = rvec[1]
             tvec = tvec[1]
+<<<<<<< HEAD
         rotM = cv.Rodrigues(rvec)[0]
         camPos = -np.matrix(rotM).T * np.matrix(tvec)
         camPos = camPos.A1
@@ -153,3 +190,9 @@ class StabilizeCam:
             rospy.loginfo("Static calibration loaded from " + self.filename)
         else:
             rospy.logwarn("Static calibration file " + self.filename + " doesn't exist or corrupted")
+=======
+        rotM = cv2.Rodrigues(rvec)[0]
+        camPos = -np.matrix(rotM).T * np.matrix(tvec)
+        camPos = camPos.A1
+        return camPos, rvec, tvec, static_markers
+>>>>>>> 1d80a791a3865431e88396f9ca970d23401cda74
