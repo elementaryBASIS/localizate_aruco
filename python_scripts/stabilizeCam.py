@@ -9,7 +9,7 @@ from time import time
 import entities
 import numpy as np
 
-class stabilizeCam:
+class StabilizeCam:
     measurements_count = 100
     static_markers_sked = [10, 11, 12] # list of static marker ids
     smarker_size = 0.1 # size of static marker [meters]
@@ -22,24 +22,33 @@ class stabilizeCam:
         self.camera_mtx = mtx
         self.camera_dst = dst
         self.save_file = filename
-    
-    def camera_position(self, markers):
+        self.isCalibrated = False  
+        self.calibrating = False
+        
+    def calibrate(self):
+        self.isCalibrated = False
+        self.calibrating = True
+
+    def processCalibrate(self, markers):
+        
         static_markers = list(filter(lambda x: x.id in self.static_markers_sked, markers))
         for i in range(len(static_markers)):
             rvec, tvec, _ = aruco.estimatePoseSingleMarkers(static_markers[i].corners, self.smarker_size, self.camera_mtx, self.camera_dst)
-            static_markers[i] = entities.definedMarker(static_markers[i], rvec, tvec)
+            static_markers[i] = entities.DefinedMarker(static_markers[i], rvec, tvec)
         # define cubes on field
         if len(static_markers) < 3:
             rospy.logwarn("Non-compliance with the required number of markers")
-            return
+            return self.isCalibrated, []
             
         sort = sorted(static_markers, key=lambda m: m.dst, reverse=True)
         m1 = min(sort[:2], key=lambda m: m.tvec[0][0])
         m2 = max(sort[:2], key=lambda m: m.tvec[0][0])
         m3 = sort[2]
-        m1.name = "1"
-        m2.name = "2"
-        m3.name = "3"
+        m1.name = "Static_1"
+        m2.name = "Static_2"
+        m3.name = "Static_3"
+        if not self.calibrating:
+            return self.isCalibrated, sort
         imgPoints = np.array((m1.center, m2.center, m3.center))
         image_points = imgPoints.astype('float32')
 
@@ -53,4 +62,16 @@ class stabilizeCam:
         rotM = cv2.Rodrigues(rvec)[0]
         camPos = -np.matrix(rotM).T * np.matrix(tvec)
         camPos = camPos.A1
-        return camPos, rvec, tvec, static_markers
+
+        self.camPos = camPos
+        self.static_rvec = rvec
+        self.static_tvec = tvec
+        self.isCalibrated = True
+        self.calibrating = False
+        return self.isCalibrated, sort
+
+    def camera_position(self):
+        if self.isCalibrated:
+            return True, self.camPos, self.static_rvec, self.static_tvec
+        else:
+            return False, None, None, None

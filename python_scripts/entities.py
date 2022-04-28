@@ -1,7 +1,7 @@
 import cv2
 import numpy as np
 
-class marker:
+class Marker:
     def __init__(self, id, corners, name = ""):
         self.id = id
         self.name = name
@@ -14,7 +14,7 @@ class marker:
     def __str__(self):
         return "ID: %x" % (self.id)
 
-class definedMarker(marker):
+class DefinedMarker(Marker):
     def __init__(self, marker, rvec, tvec):
         self.__dict__ = marker.__dict__.copy()
         self.rvec = rvec[0]
@@ -23,6 +23,6 @@ class definedMarker(marker):
     def __str__(self):
         return "ID: %x Pose: %s  Ang: %s(deg)" % (self.id, str(self.tvec[0]), str(np.rad2deg(self.rvec[0])))
 
-class robot:
+class Robot:
     def __init__(self):
         pass
