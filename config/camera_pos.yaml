@@ -1,0 +1,30 @@
+%YAML:1.0
+---
+camera_pos: !!opencv-matrix
+   rows: 3
+   cols: 1
+   dt: d
+   data: [ 5.0067703844939626e-01, 1.4349546283918748e+00,
+       1.0040870074074464e+00 ]
+static_rvec: !!opencv-matrix
+   rows: 3
+   cols: 1
+   dt: d
+   data: [ -2.7086333220918562e-02, 2.8075242065208657e+00,
+       -1.2066596040312918e+00 ]
+static_tvec: !!opencv-matrix
+   rows: 3
+   cols: 1
+   dt: d
+   data: [ 3.8773474042360750e-01, -2.3668482166766752e-01,
+       1.7639742251742072e+00 ]
+mean: !!opencv-matrix
+   rows: 3
+   cols: 2
+   dt: d
+   data: [ 50., 79., 518., 204., 124., 240. ]
+std: !!opencv-matrix
+   rows: 3
+   cols: 2
+   dt: d
+   data: [ 0., 0., 0., 0., 0., 0. ]

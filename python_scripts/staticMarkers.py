@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 from sys import flags
-import cv2
+import cv2 as cv
 from cv2 import aruco
 import numpy as np
 from math import *
@@ -16,16 +16,15 @@ from std_srvs.srv import Empty
 
 class StaticMarkers:
     aruco_dict = aruco.getPredefinedDictionary(aruco.DICT_4X4_100)
-    def __init__(self, calibFileName="calibration_settings.yaml", debug=False, useGUI=False):
+    def __init__(self, calibFilename, staticPosFilename, debug=False, useGUI=False):
         self.debug = debug  # show debug info
         self.useGUI = useGUI
-        cv_file = cv2.FileStorage(calibFileName, cv2.FILE_STORAGE_READ)
+        cv_file = cv.FileStorage(calibFilename, cv.FILE_STORAGE_READ)
         self.camera_mtx = cv_file.getNode("camera_matrix").mat()
         self.camera_dst = cv_file.getNode("dist_coeff").mat()
-        assert (
-            not self.camera_mtx is None or not self.camera_dst is None), "%s not found!" % calibFileName
+        assert (not self.camera_mtx is None or not self.camera_dst is None), "%s not found!" % calibFilename
         self.detector_params = aruco.DetectorParameters_create()
-        self.staticLocalizer = stabilizeCam.StabilizeCam(self.camera_mtx, self.camera_dst)
+        self.staticLocalizer = stabilizeCam.StabilizeCam(self.camera_mtx, self.camera_dst, staticPosFilename)
         self.robotsLocalizer = localizer.RobotsLocalizer(self.camera_mtx, self.camera_dst)
 
     def main(self):
@@ -47,7 +46,7 @@ class StaticMarkers:
 
     def detect_markers(self):
         frame = self.frame
-        gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+        gray = cv.cvtColor(frame, cv.COLOR_BGR2GRAY)
         detected_markers = []
         corners, ids, _rejected = aruco.detectMarkers(gray, self.aruco_dict, parameters=self.detector_params)
         if ids is None:
@@ -68,26 +67,25 @@ class StaticMarkers:
     def draw_info(self, markers, robots = []):
         if self.useGUI:
             frame = self.frame.copy()
-            font = cv2.FONT_HERSHEY_PLAIN
-            
+            font = cv.FONT_HERSHEY_PLAIN
             for i, m in enumerate(markers):
                 aruco.drawDetectedMarkers(frame, [m.corners])
-                cv2.putText(frame, str(m.name), m.center, font, 1, (0, 255, 0), 2, cv2.LINE_AA)
+                cv.putText(frame, str(m.name), m.center, font, 1, (0, 255, 0), 2, cv.LINE_AA)
             ret, camera_pos, static_rvec, static_tvec = self.staticLocalizer.camera_position()
             if not ret:
-                resized = cv2.resize(frame, (1280, 960), interpolation=cv2.INTER_AREA)
-                cv2.imshow("Detected markers", resized)
-                cv2.waitKey(1)
+                resized = cv.resize(frame, (1280, 960), interpolation=cv.INTER_AREA)
+                cv.imshow("Detected markers", resized)
+                cv.waitKey(1)
                 return
-            aruco.drawAxis(frame, self.camera_mtx, self.camera_dst, static_rvec, static_tvec, 1)
-            
-            cv2.putText(frame, "Cam: X={0:3.4f} Y={1:3.4f} Z={2:3.4f}" .format(*camera_pos), (5, 30), font, 1.5, (255, 0, 0), 2, cv2.LINE_AA)
+            aruco.drawAxis(frame, self.camera_mtx, self.camera_dst, static_rvec, static_tvec, 0.5)
+            self.staticLocalizer.draw_zone(frame)
+            cv.putText(frame, "Cam: X={0:3.4f} Y={1:3.4f} Z={2:3.4f}" .format(*camera_pos), (5, 30), font, 1.5, (255, 0, 0), 2, cv.LINE_AA)
             for i, robot in enumerate(robots):
-                cv2.putText(frame, "Robot: X={0:3.4f} Y={1:3.4f} Z={2:3.4f}" .format(*robot), (5, 400 + 30 * i), font, 1.5, (0, 0, 255), 2, cv2.LINE_AA)
+                cv.putText(frame, "Robot: X={0:3.4f} Y={1:3.4f} Z={2:3.4f}" .format(*robot), (5, 400 + 30 * i), font, 1.5, (0, 0, 255), 2, cv.LINE_AA)
             
-            resized = cv2.resize(frame, (1280, 960), interpolation=cv2.INTER_AREA)
-            cv2.imshow("Detected markers", resized)
-            cv2.waitKey(1)
+            resized = cv.resize(frame, (1280, 960), interpolation=cv.INTER_AREA)
+            cv.imshow("Detected markers", resized)
+            cv.waitKey(1)
 
     def frame_cb(self, data):
         # skip frame if it's corrupted
@@ -106,15 +104,18 @@ class StaticMarkers:
 
 if __name__ == "__main__":
     rospy.init_node('elements_detector', anonymous=True)
+    assert (rospy.has_param('localizer/camera_params')), 'Ros param "localizer/camera_params" not set'
     configFile = rospy.get_param('localizer/camera_params')
+    assert (rospy.has_param('localizer/static_params')), 'Ros param "localizer/static_params" not set'
+    staticFile = rospy.get_param('localizer/static_params')
     useGUI = rospy.get_param('localizer/GUI_enable', False)
     rospy.loginfo("Using calib config: " + configFile)
     rospy.loginfo("Use GUI: " + str(useGUI))
-    localizer = StaticMarkers(configFile, debug = False, useGUI = useGUI)
+    localizer = StaticMarkers(configFile, staticFile, debug = False, useGUI = useGUI)
     rospy.Subscriber("/camera/image_raw", Image, localizer.frame_cb)
     rospy.Service('localizer/recalibrate', Empty, localizer.recalibrate)
     try:
         rospy.spin()
     except KeyboardInterrupt:
         print("Shutting down")
-    cv2.destroyAllWindows()
+    cv.destroyAllWindows()

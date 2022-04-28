@@ -1,4 +1,4 @@
-import cv2
+import cv2 as cv
 import numpy as np
 
 class Marker:
@@ -6,7 +6,7 @@ class Marker:
         self.id = id
         self.name = name
         self.corners = corners.copy()
-        M = cv2.moments(corners)
+        M = cv.moments(corners)
         cX = int(M["m10"] / M["m00"])
         cY = int(M["m01"] / M["m00"])
         self.center = (cX, cY)
