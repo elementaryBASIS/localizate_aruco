@@ -45,7 +45,7 @@ class StabilizeCam:
             static_markers[i] = entities.DefinedMarker(static_markers[i], rvec, tvec)
         # define cubes on field
         if len(static_markers) < 3:
-            rospy.logwarn("Non-compliance with the required number of static markers")
+            rospy.logwarn_throttle_identical(1, "Non-compliance with the required number of static markers")
             return self.isCalibrated, []
             
         sort = sorted(static_markers, key=lambda m: m.dst, reverse=True)

@@ -33,7 +33,7 @@ class StaticMarkers:
         markers = self.detect_markers()
         if not self.staticLocalizer.isCalibrated:
             if not self.staticLocalizer.calibrating:
-                rospy.logwarn("Camera position not defined, calibrate camera")
+                rospy.logwarn_throttle_identical(2, "Camera position not defined, calibrate camera")
             is_done, static_markers = self.staticLocalizer.processCalibrate(markers)
             if not is_done:
                 self.draw_info(static_markers)
@@ -50,7 +50,7 @@ class StaticMarkers:
         detected_markers = []
         corners, ids, _rejected = aruco.detectMarkers(gray, self.aruco_dict, parameters=self.detector_params)
         if ids is None:
-            rospy.logwarn("Don't see any markers")
+            rospy.logwarn_throttle_identical(2, "Don't see any markers")
         else:
             for i in range(len(ids)):
                 detected_markers.append(entities.Marker(ids[i], corners[i]))
