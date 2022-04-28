@@ -127,7 +127,9 @@ class StabilizeCam:
             return False, None, None, None
 
     def _save_calibration(self, mean, std):
+        import datetime
         cv_file = cv.FileStorage(self.filename, cv.FILE_STORAGE_WRITE)
+        cv_file.writeComment("Date: " + str(datetime.datetime.now()))
         cv_file.write("camera_pos", self.camPos)
         cv_file.write("static_rvec", self.static_rvec)
         cv_file.write("static_tvec", self.static_tvec)
