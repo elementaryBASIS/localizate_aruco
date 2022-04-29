@@ -12,4 +12,3 @@ dist_coeff: !!opencv-matrix
    cols: 5
    dt: d
    data: [0.111399, -0.110521, -0.008289, 0.015730, 0.000000 ]
-

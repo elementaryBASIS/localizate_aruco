@@ -10,7 +10,7 @@ import entities
 import numpy as np
 
 class StabilizeCam:
-    measurements_count = 1 # count of frames for calibration
+    measurements_count = 100 # count of frames for calibration
     static_markers_sked = [10, 11, 12] # list of static marker ids
     smarker_size = 0.1 # size of static marker [meters]
     static_poses = (
@@ -45,7 +45,7 @@ class StabilizeCam:
             static_markers[i] = entities.DefinedMarker(static_markers[i], rvec, tvec)
         # define cubes on field
         if len(static_markers) < 3:
-            rospy.logwarn_throttle_identical(1, "Non-compliance with the required number of static markers")
+            rospy.logwarn_throttle_identical(2, "Non-compliance with the required number of static markers")
             return self.isCalibrated, []
             
         sort = sorted(static_markers, key=lambda m: m.dst, reverse=True)

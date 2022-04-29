@@ -39,7 +39,7 @@ class StaticMarkers:
                 self.draw_info(static_markers)
                 return
         ret, camera_pos, static_rvec, static_tvec = self.staticLocalizer.camera_position()
-        robots, robots_markers = self.robotsLocalizer.locate_robots(markers, static_rvec, static_tvec)
+        robots, robots_markers = self.robotsLocalizer.locate_robots(markers, camera_pos, static_rvec, static_tvec)
         filtered_markers += robots_markers
         self.draw_info(filtered_markers, robots)
         
@@ -82,7 +82,12 @@ class StaticMarkers:
             cv.putText(frame, "Cam: X={0:3.4f} Y={1:3.4f} Z={2:3.4f}" .format(*camera_pos), (5, 30), font, 1.5, (255, 0, 0), 2, cv.LINE_AA)
             for i, robot in enumerate(robots):
                 cv.putText(frame, "Robot: X={0:3.4f} Y={1:3.4f} Z={2:3.4f}" .format(*robot), (5, 400 + 30 * i), font, 1.5, (0, 0, 255), 2, cv.LINE_AA)
-            
+            for m in markers:
+                #print("r", m.rvec)
+                #print("t", m.tvec)
+                aruco.drawAxis(frame, self.camera_mtx, self.camera_dst, m.rvec, m.tvec, 0.1)
+                for i, c in enumerate(m.corners[0]):
+                    cv.putText(frame, str(i), tuple(c), font, 1, (0, 255, 0), 1, cv.LINE_AA)
             resized = cv.resize(frame, (1280, 960), interpolation=cv.INTER_AREA)
             cv.imshow("Detected markers", resized)
             cv.waitKey(1)

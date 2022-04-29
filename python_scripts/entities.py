@@ -24,5 +24,17 @@ class DefinedMarker(Marker):
         return "ID: %x Pose: %s  Ang: %s(deg)" % (self.id, str(self.tvec[0]), str(np.rad2deg(self.rvec[0])))
 
 class Robot:
-    def __init__(self):
-        pass
+    '''
+        Every robot has prismatical head.
+        Note: it isn's cube, that's why we set every corner's position from bottom center for each marker [meters]
+        Corners order:
+                        0 1
+                        3 2
+            Counter clockwise from left top
+    '''
+    markers = dict()
+    def __init__(self, name):
+        self.name = name
+    def getMarker(self, id):
+        if id in self.markers.keys():
+            return self.markers[id]
