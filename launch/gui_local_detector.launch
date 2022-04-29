@@ -6,10 +6,13 @@
             pkg="image_publisher"
             type="image_publisher"
             args="2">
+        <param name="publish_rate" value="15" />
     </node>
+    
     <node name="localizer"
           pkg="localizate_aruco"
           type="staticMarkers.py" 
           output="screen">
+
     </node>
 </launch>
