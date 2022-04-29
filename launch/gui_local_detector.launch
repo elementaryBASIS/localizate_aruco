@@ -1,12 +1,14 @@
 <launch>
-    <param name='localizer/camera_params' value='$(find localizate_aruco)/config/c270.yaml' />
+    <param name='localizer/camera_params' value='$(find localizate_aruco)/config/c270_1280x720.yaml' />
     <param name='localizer/static_params' value='$(find localizate_aruco)/config/camera_pos.yaml' />
     <param name='localizer/GUI_enable' value='True' />
-    <node name="camera"
-            pkg="image_publisher"
-            type="image_publisher"
-            args="2">
-        <param name="publish_rate" value="15" />
+    <node name="cam"
+            pkg="localizate_aruco"
+            type="streamer_node">
+        <param name="width" value="1280" />
+        <param name="height" value="720" />
+        <param name="fps" value="30" />
+        <param name="file" value="/dev/video2" />
     </node>
     
     <node name="localizer"
