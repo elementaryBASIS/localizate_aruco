@@ -13,9 +13,9 @@ import entities
 import stabilizeCam
 import localizer
 from std_srvs.srv import Empty
+import configuration
 
-class StaticMarkers:
-    aruco_dict = aruco.getPredefinedDictionary(aruco.DICT_4X4_100)
+class Localizator:
     def __init__(self, calibFilename, staticPosFilename, debug=False, useGUI=False):
         self.debug = debug  # show debug info
         self.useGUI = useGUI
@@ -28,8 +28,6 @@ class StaticMarkers:
         self.robotsLocalizer = localizer.RobotsLocalizer(self.camera_mtx, self.camera_dst)
 
     def main(self):
-        filtered_markers = []
-        robots = []
         markers = self.detect_markers()
         if not self.staticLocalizer.isCalibrated:
             if not self.staticLocalizer.calibrating:
@@ -39,16 +37,17 @@ class StaticMarkers:
                 self.draw_info(static_markers)
                 return
         ret, camera_pos, static_rvec, static_tvec = self.staticLocalizer.camera_position()
-        robots, robots_markers = self.robotsLocalizer.locate_robots(markers, camera_pos, static_rvec, static_tvec)
-        filtered_markers += robots_markers
-        self.draw_info(filtered_markers, robots)
+        robots = self.robotsLocalizer.locate_robots(markers, static_rvec, static_tvec)
+        for robot in robots:
+            robot.publish()
+        self.draw_info(markers, robots)
         
 
     def detect_markers(self):
         frame = self.frame
         gray = cv.cvtColor(frame, cv.COLOR_BGR2GRAY)
         detected_markers = []
-        corners, ids, _rejected = aruco.detectMarkers(gray, self.aruco_dict, parameters=self.detector_params)
+        corners, ids, _rejected = aruco.detectMarkers(gray, configuration.aruco_dict, parameters=self.detector_params)
         if ids is None:
             rospy.logwarn_throttle_identical(2, "Don't see any markers")
         else:
@@ -73,22 +72,20 @@ class StaticMarkers:
                 cv.putText(frame, str(m.name), m.center, font, 1, (0, 255, 0), 2, cv.LINE_AA)
             ret, camera_pos, static_rvec, static_tvec = self.staticLocalizer.camera_position()
             if not ret:
-                resized = cv.resize(frame, (1280, 960), interpolation=cv.INTER_AREA)
+                resized = cv.resize(frame, (1280, 720), interpolation=cv.INTER_AREA)
                 cv.imshow("Detected markers", resized)
                 cv.waitKey(1)
                 return
             aruco.drawAxis(frame, self.camera_mtx, self.camera_dst, static_rvec, static_tvec, 0.5)
             self.staticLocalizer.draw_zone(frame)
-            cv.putText(frame, "Cam: X={0:3.4f} Y={1:3.4f} Z={2:3.4f}" .format(*camera_pos), (5, 30), font, 1.5, (255, 0, 0), 2, cv.LINE_AA)
+            cv.putText(frame, "Cam pos: X={0:3.4f} Y={1:3.4f} Z={2:3.4f}" .format(*camera_pos), (5, 30), font, 2, (255, 0, 0), 2, cv.LINE_AA)
             for i, robot in enumerate(robots):
-                cv.putText(frame, "Robot: X={0:3.4f} Y={1:3.4f} Z={2:3.4f}" .format(*robot), (5, 400 + 30 * i), font, 1.5, (0, 0, 255), 2, cv.LINE_AA)
-            for m in markers:
-                #print("r", m.rvec)
-                #print("t", m.tvec)
-                aruco.drawAxis(frame, self.camera_mtx, self.camera_dst, m.rvec, m.tvec, 0.1)
-                for i, c in enumerate(m.corners[0]):
-                    cv.putText(frame, str(i), tuple(c), font, 1, (0, 255, 0), 1, cv.LINE_AA)
-            resized = cv.resize(frame, (1280, 960), interpolation=cv.INTER_AREA)
+                cv.putText(frame, str(robot), (5, 90 + 30 * i), font, 2, (0, 0, 255), 2, cv.LINE_AA)
+                if robot.pos is None:
+                    continue
+                rvec, tvec = robot.get_mean_position()
+                aruco.drawAxis(frame, self.camera_mtx, self.camera_dst, rvec, tvec, 0.1)
+            resized = cv.resize(frame, (1280, 720), interpolation=cv.INTER_AREA)
             cv.imshow("Detected markers", resized)
             cv.waitKey(1)
 
@@ -116,7 +113,7 @@ if __name__ == "__main__":
     useGUI = rospy.get_param('localizer/GUI_enable', False)
     rospy.loginfo("Using calib config: " + configFile)
     rospy.loginfo("Use GUI: " + str(useGUI))
-    localizer = StaticMarkers(configFile, staticFile, debug = False, useGUI = useGUI)
+    localizer = Localizator(configFile, staticFile, debug = False, useGUI = useGUI)
     rospy.Subscriber("/camera/image_raw", Image, localizer.frame_cb)
     rospy.Service('localizer/recalibrate', Empty, localizer.recalibrate)
     try:

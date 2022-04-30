@@ -8,17 +8,10 @@ import rospy
 from time import time
 import entities
 import numpy as np
+import configuration
 
 class StabilizeCam:
-    measurements_count = 100 # count of frames for calibration
-    static_markers_sked = [10, 11, 12] # list of static marker ids
-    smarker_size = 0.1 # size of static marker [meters]
-    static_poses = (
-        (0.812 + smarker_size / 2, 0.027 + smarker_size / 2, 0.0),
-        (0.038 + smarker_size / 2, 0.284 + smarker_size / 2, 0.0),
-        (0.637 + smarker_size / 2, 0.405 + smarker_size / 2, 0.0)
-    )
-    field_size = (0.8, 0.6) #size of battlefield [meters]
+    
     def __init__(self, mtx, dst, filename):
         self.camera_mtx = mtx
         self.camera_dst = dst
@@ -39,9 +32,9 @@ class StabilizeCam:
 
     def processCalibrate(self, markers):
         
-        static_markers = list(filter(lambda x: x.id in self.static_markers_sked, markers))
+        static_markers = list(filter(lambda x: x.id in configuration.static_markers_sked, markers))
         for i in range(len(static_markers)):
-            rvec, tvec, _ = aruco.estimatePoseSingleMarkers(static_markers[i].corners, self.smarker_size, self.camera_mtx, self.camera_dst)
+            rvec, tvec, _ = aruco.estimatePoseSingleMarkers(static_markers[i].corners, configuration.staticMarker_size, self.camera_mtx, self.camera_dst)
             static_markers[i] = entities.DefinedMarker(static_markers[i], rvec, tvec)
         # define cubes on field
         if len(static_markers) < 3:
@@ -61,7 +54,7 @@ class StabilizeCam:
         self.measurements["m1"].append(m1.center)
         self.measurements["m2"].append(m2.center)
         self.measurements["m3"].append(m3.center)
-        if len(self.measurements["m1"]) < self.measurements_count:
+        if len(self.measurements["m1"]) < configuration.measurements_count:
             return self.isCalibrated, sort
         m1_poses = np.array(self.measurements["m1"])
         m1_pos = (np.mean(m1_poses[:, 0]), np.mean(m1_poses[:, 1]))
@@ -79,7 +72,7 @@ class StabilizeCam:
         rospy.loginfo("Mean:\n" + str(image_points))
         rospy.loginfo("Std:\n" + str(std))
 
-        _, rvec, tvec = cv.solveP3P(np.array(self.static_poses, dtype="float32"), image_points, self.camera_mtx, self.camera_dst, flags=cv.SOLVEPNP_AP3P )
+        _, rvec, tvec = cv.solveP3P(np.array(configuration.static_poses, dtype="float32"), image_points, self.camera_mtx, self.camera_dst, flags=cv.SOLVEPNP_AP3P )
         if tvec[0][2] > tvec[1][2]:
             rvec = rvec[0]
             tvec = tvec[0]
@@ -89,6 +82,9 @@ class StabilizeCam:
         rotM = cv.Rodrigues(rvec)[0]
         camPos = -np.matrix(rotM).T * np.matrix(tvec)
         camPos = camPos.A1
+
+        rotation_matrix = np.eye(4)
+        rotation_matrix[0:3, 0:3] = cv.Rodrigues(rvec)[0]
         self.camPos = camPos
         self.static_rvec = rvec
         self.static_tvec = tvec
@@ -99,7 +95,7 @@ class StabilizeCam:
         return self.isCalibrated, sort
     
     def _zone2img(self):
-        x, y = self.field_size
+        x, y = configuration.field_size
         points_real = np.zeros((4 * 6, 3),  dtype="float32")
         for i in range(6):
             points_real[i] = (0, 0, i / 20.0)
@@ -124,7 +120,7 @@ class StabilizeCam:
         if self.isCalibrated:
             return True, self.camPos, self.static_rvec, self.static_tvec
         else:
-            return False, None, None, None
+            return False, None, None, None, None
 
     def _save_calibration(self, mean, std):
         import datetime

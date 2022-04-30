@@ -13,7 +13,7 @@
     
     <node name="localizer"
           pkg="localizate_aruco"
-          type="staticMarkers.py" 
+          type="main.py" 
           output="screen">
 
     </node>

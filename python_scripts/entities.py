@@ -1,5 +1,8 @@
 import cv2 as cv
 import numpy as np
+import rospy
+from geometry_msgs.msg import Twist 
+from geometry_msgs.msg import Vector3
 
 class Marker:
     def __init__(self, id, corners, name = ""):
@@ -33,8 +36,44 @@ class Robot:
             Counter clockwise from left top
     '''
     markers = dict()
+
     def __init__(self, name):
         self.name = name
-    def getMarker(self, id):
+        self.real_reset()
+        self.topic = rospy.Publisher('robot/' + self.name, Twist)
+
+    def get_marker(self, id):
         if id in self.markers.keys():
             return self.markers[id]
+
+    def add_DefinedMarker(self, marker):
+        self.definedMarkers.append(marker)
+    
+    def get_mean_position(self):
+        if not len(self.definedMarkers):
+            return
+        tvecs = []
+        rvecs = []
+        for m in self.definedMarkers:
+            tvecs.append(m.tvec)
+            rvecs.append(m.rvec)
+        tvecs = np.array(tvecs).reshape((len(tvecs), 3))
+        rvecs = np.array(rvecs).reshape((len(rvecs), 3))
+        tvec = np.mean(tvecs, axis = 0)
+        rvec = np.mean(rvecs, axis = 0)
+        return rvec, tvec
+        
+    def real_reset(self):
+        self.pos = None
+        self.ang = None
+        self.definedMarkers = []
+
+    def publish(self):
+        if not self.pos is None:
+            self.topic.publish(Twist(Vector3(*self.pos), Vector3(*self.ang)))
+    
+    def __str__(self):
+        if self.pos is None or self.ang is None:
+            return "{0}: out of sight" .format(self.name)
+        return "{0}: X={1:3.4f} Y={2:3.4f} Z={3:3.4f}" .format(self.name, *self.pos)
+    
