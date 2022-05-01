@@ -18,7 +18,7 @@ static_poses = (
 field_size = (0.8, 0.6) # size of battlefield [meters]
 
 # robots
-robots = [entities.Robot("Doshirak")]
+robots = [entities.Robot("Doshirak"), entities.Robot("Cube")]
 robots[0].markers[25] = np.array((
         (0.056, 0.102, 0.153),
         (-0.056, 0.102, 0.153),
@@ -30,4 +30,29 @@ robots[0].markers[14] = np.array((
         (-0.135, 0.043, 0.047),
         (-0.135, 0.043, 0.147),
         (-0.135, -0.057, 0.147)
+    ), dtype="float32")
+
+robots[1].markers[90] = np.array((
+        (0.04, 0.05, 0.072),
+        (-0.04, 0.05, 0.072),
+        (-0.04, 0.05, 0.008),
+        (0.04, 0.05, 0.008)
+    ), dtype="float32")
+robots[1].markers[91] = np.array((
+        (-0.05, 0.04, 0.072),
+        (-0.05, -0.04, 0.072),
+        (-0.05, -0.04, 0.008),
+        (-0.05, 0.04, 0.008)
+    ), dtype="float32")
+robots[1].markers[92] = np.array((
+        (-0.04, -0.05, 0.072),
+        (0.04, -0.05, 0.072),
+        (0.04, -0.05, 0.008),
+        (-0.04, -0.05, 0.008)
+    ), dtype="float32")
+robots[1].markers[93] = np.array((
+        (0.05, -0.04, 0.072),
+        (0.05, 0.04, 0.072),
+        (0.05, 0.04, 0.008),
+        (0.05, -0.04, 0.008)
     ), dtype="float32")

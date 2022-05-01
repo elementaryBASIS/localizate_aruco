@@ -44,10 +44,9 @@ class Localizator:
         
 
     def detect_markers(self):
-        frame = self.frame
-        gray = cv.cvtColor(frame, cv.COLOR_BGR2GRAY)
+        frame = self.prepare_image(self.frame)
         detected_markers = []
-        corners, ids, _rejected = aruco.detectMarkers(gray, configuration.aruco_dict, parameters=self.detector_params)
+        corners, ids, _rejected = aruco.detectMarkers(frame, configuration.aruco_dict, parameters=self.detector_params)
         if ids is None:
             rospy.logwarn_throttle_identical(2, "Don't see any markers")
         else:
@@ -60,8 +59,9 @@ class Localizator:
         return []
 
     def prepare_image(self, frame):
-        new_frame = frame
-        return new_frame
+        frame = cv.cvtColor(frame, cv.COLOR_BGR2GRAY)
+        frame = cv.bitwise_not(frame)
+        return frame
 
     def draw_info(self, markers, robots = []):
         if self.useGUI:
@@ -101,7 +101,7 @@ class Localizator:
         except CvBridgeError as e:
             rospy.logwarn("Corrupted frame")
         else:
-            self.frame = self.prepare_image(frame)
+            self.frame = frame
             self.main()
 
 if __name__ == "__main__":

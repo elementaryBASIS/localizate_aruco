@@ -35,9 +35,9 @@ class Robot:
                         3 2
             Counter clockwise from left top
     '''
-    markers = dict()
 
     def __init__(self, name):
+        self.markers = dict()
         self.name = name
         self.real_reset()
         self.topic = rospy.Publisher('robot/' + self.name, Twist)
@@ -75,5 +75,5 @@ class Robot:
     def __str__(self):
         if self.pos is None or self.ang is None:
             return "{0}: out of sight" .format(self.name)
-        return "{0}: X={1:3.4f} Y={2:3.4f} Z={3:3.4f}" .format(self.name, *self.pos)
+        return "{0}: X={1:3.4f} Y={2:3.4f} Z={3:3.4f} A={4:3.4f} B={5:3.4f} T={6:3.4f}" .format(self.name, *np.concatenate((self.pos, np.rad2deg(self.ang))))
     

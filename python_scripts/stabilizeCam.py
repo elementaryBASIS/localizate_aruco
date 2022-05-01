@@ -120,7 +120,7 @@ class StabilizeCam:
         if self.isCalibrated:
             return True, self.camPos, self.static_rvec, self.static_tvec
         else:
-            return False, None, None, None, None
+            return False, None, None, None
 
     def _save_calibration(self, mean, std):
         import datetime
