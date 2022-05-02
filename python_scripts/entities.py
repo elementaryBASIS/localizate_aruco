@@ -1,6 +1,7 @@
 import cv2 as cv
 import numpy as np
 import rospy
+import tf
 from geometry_msgs.msg import Vector3
 from geometry_msgs.msg import PoseStamped
 from geometry_msgs.msg import Pose
@@ -69,17 +70,16 @@ class Robot:
     def real_reset(self):
         self.pos = None
         self.ang = None
-        self.quaternion = None
         self.definedMarkers = []
 
     def publish(self, header):
-        if self.pos is None or self.ang is None or self.quaternion is None :
+        if self.pos is None or self.ang is None:
             return
         head = Header()
         head.stamp.secs = header.stamp.secs
         head.stamp.nsecs = header.stamp.nsecs
         head.frame_id = header.frame_id
-        self.topic.publish(PoseStamped(head, Pose(Point(*self.pos), Quaternion(*self.quaternion))))
+        self.topic.publish(PoseStamped(head, Pose(Point(*self.pos), Quaternion(*tf.transformations.quaternion_from_euler(*self.ang)))))
     
     def __str__(self):
         if self.pos is None or self.ang is None:

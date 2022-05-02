@@ -29,7 +29,6 @@ class RobotsLocalizer:
                 r_ang, r_pos = self.relativePosition(rvec, tvec, static_rvec, static_tvec)
                 robot.pos  = r_pos.ravel()
                 robot.ang = r_ang.ravel()
-                robot.quaternion = self.get_quaternion_from_euler(*robot.ang)
         return configuration.robots
 
     def estimatePoseRobot(self, marker):
@@ -71,11 +70,3 @@ class RobotsLocalizer:
         composedRvec = composedRvec.reshape((3, 1))
         composedTvec = composedTvec.reshape((3, 1))
         return composedRvec, composedTvec
-
-    def get_quaternion_from_euler(self, roll, pitch, yaw):
-        qx = np.sin(roll/2) * np.cos(pitch/2) * np.cos(yaw/2) - np.cos(roll/2) * np.sin(pitch/2) * np.sin(yaw/2)
-        qy = np.cos(roll/2) * np.sin(pitch/2) * np.cos(yaw/2) + np.sin(roll/2) * np.cos(pitch/2) * np.sin(yaw/2)
-        qz = np.cos(roll/2) * np.cos(pitch/2) * np.sin(yaw/2) - np.sin(roll/2) * np.sin(pitch/2) * np.cos(yaw/2)
-        qw = np.cos(roll/2) * np.cos(pitch/2) * np.cos(yaw/2) + np.sin(roll/2) * np.sin(pitch/2) * np.sin(yaw/2)
-        
-        return np.array((qx, qy, qz, qw))
