@@ -1,9 +1,12 @@
 import cv2 as cv
 import numpy as np
 import rospy
-from geometry_msgs.msg import Twist 
 from geometry_msgs.msg import Vector3
-
+from geometry_msgs.msg import PoseStamped
+from geometry_msgs.msg import Pose
+from geometry_msgs.msg import Point
+from geometry_msgs.msg import Quaternion
+from std_msgs.msg import Header
 class Marker:
     def __init__(self, id, corners, name = ""):
         self.id = id
@@ -40,7 +43,7 @@ class Robot:
         self.markers = dict()
         self.name = name
         self.real_reset()
-        self.topic = rospy.Publisher('robot/' + self.name, Twist)
+        self.topic = rospy.Publisher('robot/' + self.name, PoseStamped, queue_size = 1)
 
     def get_marker(self, id):
         if id in self.markers.keys():
@@ -66,11 +69,17 @@ class Robot:
     def real_reset(self):
         self.pos = None
         self.ang = None
+        self.quaternion = None
         self.definedMarkers = []
 
-    def publish(self):
-        if not self.pos is None:
-            self.topic.publish(Twist(Vector3(*self.pos), Vector3(*self.ang)))
+    def publish(self, header):
+        if self.pos is None or self.ang is None or self.quaternion is None :
+            return
+        head = Header()
+        head.stamp.secs = header.stamp.secs
+        head.stamp.nsecs = header.stamp.nsecs
+        head.frame_id = header.frame_id
+        self.topic.publish(PoseStamped(head, Pose(Point(*self.pos), Quaternion(*self.quaternion))))
     
     def __str__(self):
         if self.pos is None or self.ang is None:

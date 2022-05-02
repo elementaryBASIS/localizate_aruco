@@ -16,7 +16,7 @@ std::string camFile = "/dev/video0";
 int width = 640;
 int height = 480;
 int fps = 30;
-
+uint64_t seq = 0;
 int main (int argc, char** argv){
     ros::init(argc, argv, "camera_stream_node");
     ros::NodeHandle nh;
@@ -44,10 +44,14 @@ int main (int argc, char** argv){
         cv_bridge::CvImage img_bridge;
         sensor_msgs::Image img_msg;
         std_msgs::Header header;
+        //header.seq = seq;
+        header.stamp = ros::Time::now();
+        header.frame_id = "map";
         img_bridge = cv_bridge::CvImage(header, sensor_msgs::image_encodings::RGB8, frame);
         img_bridge.toImageMsg(img_msg);
 
         cap_pub.publish(img_msg);
         //loop_rate.sleep();
+        seq++;
     }
 }

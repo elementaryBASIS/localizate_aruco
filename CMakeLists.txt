@@ -30,6 +30,6 @@ target_link_libraries(streamer_node
   ${OpenCV_LIBRARIES}
 )
 catkin_install_python(PROGRAMS
-  python_scripts/staticMarkers.py
+  python_scripts/main.py
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )

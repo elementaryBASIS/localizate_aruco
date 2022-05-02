@@ -39,7 +39,7 @@ class Localizator:
         ret, camera_pos, static_rvec, static_tvec = self.staticLocalizer.camera_position()
         robots = self.robotsLocalizer.locate_robots(markers, static_rvec, static_tvec)
         for robot in robots:
-            robot.publish()
+            robot.publish(self.data_header)
         self.draw_info(markers, robots)
         
 
@@ -102,6 +102,7 @@ class Localizator:
             rospy.logwarn("Corrupted frame")
         else:
             self.frame = frame
+            self.data_header = data.header
             self.main()
 
 if __name__ == "__main__":
