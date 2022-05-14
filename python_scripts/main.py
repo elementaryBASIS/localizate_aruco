@@ -59,7 +59,7 @@ class Localizator:
         return []
 
     def prepare_image(self, frame):
-        frame = cv.cvtColor(frame, cv.COLOR_BGR2GRAY)
+        #frame = cv.cvtColor(frame, cv.COLOR_BGR2GRAY)
         frame = cv.bitwise_not(frame)
         return frame
 
