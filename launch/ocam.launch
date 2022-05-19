@@ -11,6 +11,8 @@
         <param name="height" value="720" />
         <param name="fps" value="60" />
         <param name="color" value="False" />
+        <param name="auto_exposure" value="False" />
+        <param name="exposure" value="13" />
         <param name="image_topic" value="camera/image_raw" />
         <param name="show_image" value="False" />
     </node>

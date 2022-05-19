@@ -3,17 +3,17 @@ import numpy as np
 from cv2 import aruco
 
 # global
-aruco_dict = aruco.getPredefinedDictionary(aruco.DICT_4X4_100)
-
+aruco_dict = aruco.getPredefinedDictionary(aruco.DICT_4X4_100) # aruco dictionary for robots
+aruco_dict_static = aruco.getPredefinedDictionary(aruco.DICT_4X4_250) # aruco dictionary for static markers
 # field
 measurements_count = 100 # count of frames for calibration
-static_markers_sked = [10, 11, 12] # list of static marker ids
-staticMarker_size = 0.1 # size of static marker [meters]
+static_markers_sked = [100, 101, 102] # list of static marker ids
+staticMarker_size = 0.176 # size of static marker [meters]
 ms = staticMarker_size
 static_poses = (
-    (0.812 + ms / 2, 0.027 + ms / 2, 0.0),
-    (0.038 + ms / 2, 0.284 + ms / 2, 0.0),
-    (0.637 + ms / 2, 0.405 + ms / 2, 0.0)
+    (1.0 - ms / 2, 0.081, ms / 2),
+    (0.0 + ms / 2, 0.081, ms / 2),
+    (1.0 - ms / 2, 0.3 + 0.081,  ms / 2)
 )
 field_size = (0.8, 0.6) # size of battlefield [meters]
 

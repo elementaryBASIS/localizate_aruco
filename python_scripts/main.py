@@ -28,11 +28,12 @@ class Localizator:
         self.robotsLocalizer = localizer.RobotsLocalizer(self.camera_mtx, self.camera_dst)
 
     def main(self):
-        markers = self.detect_markers()
+        markers = self.detect_markers(configuration.aruco_dict)
         if not self.staticLocalizer.isCalibrated:
             if not self.staticLocalizer.calibrating:
                 rospy.logwarn_throttle_identical(2, "Camera position not defined, calibrate camera")
-            is_done, static_markers = self.staticLocalizer.processCalibrate(markers)
+            static_markers_found = self.detect_markers(configuration.aruco_dict_static)
+            is_done, static_markers = self.staticLocalizer.processCalibrate(static_markers_found)
             if not is_done:
                 self.draw_info(static_markers)
                 return
@@ -43,10 +44,10 @@ class Localizator:
         self.draw_info(markers, robots)
         
 
-    def detect_markers(self):
+    def detect_markers(self, dict):
         frame = self.prepare_image(self.frame)
         detected_markers = []
-        corners, ids, _rejected = aruco.detectMarkers(frame, configuration.aruco_dict, parameters=self.detector_params)
+        corners, ids, _rejected = aruco.detectMarkers(frame, dict, parameters=self.detector_params)
         if ids is None:
             rospy.logwarn_throttle_identical(2, "Don't see any markers")
         else:
