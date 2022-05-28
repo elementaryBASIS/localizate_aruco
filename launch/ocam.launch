@@ -1,5 +1,5 @@
 <launch>
-    <param name='localizer/camera_params' value='$(find localizate_aruco)/config/c270_1280x720.yaml' />
+    <param name='localizer/camera_params' value='$(find localizate_aruco)/config/withrobot_oCam_orange.yaml' />
     <param name='localizer/static_params' value='$(find localizate_aruco)/config/camera_pos.yaml' />
     <param name='localizer/GUI_enable' value='True' />
     <node name="cam"
