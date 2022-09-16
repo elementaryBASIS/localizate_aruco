@@ -11,14 +11,14 @@ static_markers_sked = [100, 101, 102] # list of static marker ids
 staticMarker_size = 0.176 # size of static marker [meters]
 ms = staticMarker_size
 static_poses = (
-    (1.0 - ms / 2, 0.081, ms / 2),
-    (0.0 + ms / 2, 0.081, ms / 2),
-    (1.0 - ms / 2, 0.3 + 0.081,  ms / 2)
+    (1.0 + ms / 2, 0.081, ms / 2),
+    (0.0 + ms / 2, 0.33, ms / 2),
+    (0.5 + ms / 2, 0.795,  ms / 2)
 )
 field_size = (0.8, 0.6) # size of battlefield [meters]
 
 # robots
-robots = [entities.Robot("Doshirak"), entities.Robot("Cube")]
+robots = [entities.Robot("Doshirak"), entities.Robot("Waffle"), entities.Robot("Burger")]
 robots[0].markers[25] = np.array((
         (0.056, 0.102, 0.153),
         (-0.056, 0.102, 0.153),
@@ -51,6 +51,31 @@ robots[1].markers[92] = np.array((
         (-0.04, -0.05, 0.008)
     ), dtype="float32")
 robots[1].markers[93] = np.array((
+        (0.05, -0.04, 0.072),
+        (0.05, 0.04, 0.072),
+        (0.05, 0.04, 0.008),
+        (0.05, -0.04, 0.008)
+    ), dtype="float32")
+
+robots[2].markers[94] = np.array((
+        (0.04, 0.05, 0.072),
+        (-0.04, 0.05, 0.072),
+        (-0.04, 0.05, 0.008),
+        (0.04, 0.05, 0.008)
+    ), dtype="float32")
+robots[2].markers[95] = np.array((
+        (-0.05, 0.04, 0.072),
+        (-0.05, -0.04, 0.072),
+        (-0.05, -0.04, 0.008),
+        (-0.05, 0.04, 0.008)
+    ), dtype="float32")
+robots[2].markers[96] = np.array((
+        (-0.04, -0.05, 0.072),
+        (0.04, -0.05, 0.072),
+        (0.04, -0.05, 0.008),
+        (-0.04, -0.05, 0.008)
+    ), dtype="float32")
+robots[2].markers[97] = np.array((
         (0.05, -0.04, 0.072),
         (0.05, 0.04, 0.072),
         (0.05, 0.04, 0.008),

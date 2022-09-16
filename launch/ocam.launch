@@ -6,13 +6,13 @@
             pkg="ocam_ros"
             type="ocam_ros_node"
             output="screen">
-        <param name="device_path" value="/dev/video2" />
+        <param name="device_path" value="/dev/video0" />
         <param name="width" value="1280" />
         <param name="height" value="720" />
         <param name="fps" value="60" />
         <param name="color" value="False" />
         <param name="auto_exposure" value="False" />
-        <param name="exposure" value="13" />
+        <param name="exposure" value="30" />
         <param name="image_topic" value="camera/image_raw" />
         <param name="show_image" value="False" />
     </node>
